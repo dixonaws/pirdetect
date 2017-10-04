@@ -11,10 +11,10 @@ import datetime as dt
 import boto3
 import os
 
-GPIO.setwarnings(False)
+GPIO.setwarnings(True)
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(11, GPIO.IN)
-GPIO.setup(18, GPIO.OUT)
+GPIO.setup(40, GPIO.OUT)
 
 # classes for camera streaming
 PAGE="""\
@@ -48,6 +48,12 @@ class StreamingOutput(object):
         return self.buffer.write(buf)
 
 class StreamingHandler(server.BaseHTTPRequestHandler):
+    def LEDon(intPIN):
+        GPIO.output(intPIN, GPIO.HIGH)
+
+    def LEDoff(intPIN):
+        GPIO.output(intPIN, GPIO.LOW)
+
     def do_GET(self):
         if self.path == '/':
             self.send_response(301)
@@ -78,6 +84,18 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                     self.end_headers()
                     self.wfile.write(frame)
                     self.wfile.write(b'\r\n')
+
+                    # detect motion by polling GPIO pin 11
+                    i = GPIO.input(11)
+                    if i == 0:
+                        # send a signl to turn off the red LED
+                        GPIO.output(40, 0)
+                        time.sleep(0.01)
+                    elif i == 1:
+                        print("Motion detected")
+                        GPIO.output(40, 1)
+                        time.sleep(0.01)
+
             except Exception as e:
                 logging.warning(
                     'Removed streaming client %s: %s',
@@ -97,14 +115,14 @@ s3 = boto3.client('s3')
 bucket_name = 'piphotorecognition'
 
 with picamera.PiCamera(resolution='800x600', framerate=30) as camera:
-    print("Visit http://172.20.20.102:8000 to see live video from piCamera.")
+    print("Visit http://172.20.10.102:8000 to see live video from piCamera.")
     output = StreamingOutput()
     camera.start_recording(output, format='mjpeg')
     timestamp = dt.datetime.now().strftime('%m-%d-%Y-%H:%M:%S')
 
     videostillfilename = 'videostill_' + timestamp + '.jpg'
-    camera.capture(videostillfilename, use_video_port=True)
-    print('Captured image: ' + videostillfilename)
+    #camera.capture(videostillfilename, use_video_port=True)
+    #print('Captured image: ' + videostillfilename)
 
     camera.wait_recording(5)
 
@@ -112,19 +130,6 @@ with picamera.PiCamera(resolution='800x600', framerate=30) as camera:
         address = ('', 8000)
         server = StreamingServer(address, StreamingHandler)
         server.serve_forever()
-
-        while True:
-            i = GPIO.input(11)
-            if i == 0:
-                print("No motion detected", i)
-                GPIO.output(18, 0)
-                os.system("python redLedOff.py")
-                time.sleep(0.1)
-            elif i == 1:
-                print("Motion detected", i)
-                GPIO.output(18, 1)
-                os.system("python redLedOn.py")
-                time.sleep(0.1)
 
     finally:
         camera.stop_recording()

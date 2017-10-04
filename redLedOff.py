@@ -10,6 +10,6 @@ GPIO.setup(21, GPIO.OUT)
 
 redLEDPin=21
 
-print "Red LED off"
+print("Red LED off")
 LEDoff(redLEDPin)
 

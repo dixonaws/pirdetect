@@ -13,6 +13,6 @@ GPIO.setup(21, GPIO.OUT)
 
 redLEDPin=21
 
-print "Red LED on"
+print("Red LED on")
 LEDon(redLEDPin)
 
