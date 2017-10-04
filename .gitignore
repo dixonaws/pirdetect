@@ -4,8 +4,6 @@ include/
 local/
 lib/
 lib/python2.7
-
-
-
 .trash
 pip-selfcheck.json
+videostill*

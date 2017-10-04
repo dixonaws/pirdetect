@@ -1,6 +1,5 @@
-import RPi.GPIO as GPIO
-import os
-import time
+#!/usr/bin/python3
+
 import io
 import picamera
 import logging
@@ -11,12 +10,6 @@ import datetime as dt
 import boto3
 import os
 
-GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BOARD)
-GPIO.setup(11, GPIO.IN)
-GPIO.setup(18, GPIO.OUT)
-
-# classes for camera streaming
 PAGE="""\
 <html>
 <head>
@@ -90,42 +83,32 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     allow_reuse_address = True
     daemon_threads = True
 
+# get the IP of the local host
+myip="192.168.0.0"
+
 # instantiate an S3 object so that we can upload files
-s3 = boto3.client('s3')
+s3=boto3.client('s3')
 
 # our S3 bucket name
-bucket_name = 'piphotorecognition'
+bucket_name='piphotorecognition'
 
 with picamera.PiCamera(resolution='800x600', framerate=30) as camera:
-    print("Visit http://172.20.20.102:8000 to see live video from piCamera.")
+    print("Visit http://" + myip + ":8000 to see live video from piCamera.")
     output = StreamingOutput()
     camera.start_recording(output, format='mjpeg')
     timestamp = dt.datetime.now().strftime('%m-%d-%Y-%H:%M:%S')
 
-    videostillfilename = 'videostill_' + timestamp + '.jpg'
+    videostillfilename='videostill_' + timestamp + '.jpg'
     camera.capture(videostillfilename, use_video_port=True)
     print('Captured image: ' + videostillfilename)
 
     camera.wait_recording(5)
-
+   
     try:
         address = ('', 8000)
         server = StreamingServer(address, StreamingHandler)
         server.serve_forever()
-
-        while True:
-            i = GPIO.input(11)
-            if i == 0:
-                print("No motion detected", i)
-                GPIO.output(18, 0)
-                os.system("python redLedOff.py")
-                time.sleep(0.1)
-            elif i == 1:
-                print("Motion detected", i)
-                GPIO.output(18, 1)
-                os.system("python redLedOn.py")
-                time.sleep(0.1)
-
     finally:
         camera.stop_recording()
 
+        
