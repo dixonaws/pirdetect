@@ -3,4 +3,7 @@ bin/
 include/
 local/
 lib/
+lib/python2.7
+
+
 
