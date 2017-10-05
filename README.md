@@ -10,7 +10,7 @@ Setup the environment and install required modules:
 3. <code>cd pirdetect; pip3 install -r requirements.txt</code>
 
 Run pirdetect:
-1. python3 pirdetect.py
+1. python3 pir_record.py
 
 
 
