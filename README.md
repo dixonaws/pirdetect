@@ -10,7 +10,7 @@ What you need to build this demo:
 <li>Breadboard</li>
 <li>Green and Red LEDs</li>
 <li>2x 200k Ohm Resistors</li>
-
+</ol>
 
 <h1>Software Setup</h1>
 Clone the repo locally:
